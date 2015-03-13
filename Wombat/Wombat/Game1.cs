@@ -101,13 +101,13 @@ namespace Wombat
            menuButtons = new List<Button>();
            
            Button button= new Button();
-           button.Initialize(new Vector2(736 + 454 / 2, 169 + 145/2), "Play", "play", 1);
+           button.Initialize(new Vector2(736 + 454 / 2, 169 + 145/2), "playButton", "play", 1);
            menuButtons.Add(button);
            button = new Button();
-           button.Initialize(new Vector2(736 + 454 / 2, 467 + 145 / 2), "Options", "options", 2);
+           button.Initialize(new Vector2(736 + 454 / 2, 467 + 145 / 2), "OptionsButton", "options", 2);
            menuButtons.Add(button);
             button = new Button();
-            button.Initialize(new Vector2(736 + 454 / 2, 748 + 145 / 2), "Exit", "exit", 3);
+            button.Initialize(new Vector2(736 + 454 / 2, 748 + 145 / 2), "ExitButton", "exit", 3);
            menuButtons.Add(button);
        }
 
@@ -134,7 +134,7 @@ namespace Wombat
             bulletTexture = Content.Load<Texture2D>("particle");
             foreach (Player player in players)
             {
-                player.LoadContent(Content, "wombatPlaceholder");
+                player.LoadContent(Content, "Wombat");
             }
 
             foreach (Platform platform in platforms)
@@ -197,12 +197,38 @@ namespace Wombat
                 currentMenuItem = menuButtons.Count;
             }
         }
+        public void PlatformBulletCollision()
+        {
+            foreach (Rectangle platform in platformHitBoxes)
+            {
+                foreach (Projectile projectile in AllBullets)
+                {
+                    if(projectile.hitBox.Intersects(platform))
+                    {
+                        projectile.active = false;
+                        
+                    }
+                }
+            }
+        }
+        public void RemoveBullets()
+        {
+            for (int i = 0; i < AllBullets.Count; i++)
+            {
+                if (AllBullets[i].active == false)
+                {
+                    AllBullets.RemoveAt(i);
+                }
+            }
+        }
         public void UpdateBullets(GameTime gameTime)
         {
+            PlatformBulletCollision();
             foreach (Projectile projectile in AllBullets)
             {
                 projectile.Update(gameTime);
             }
+            RemoveBullets();
         }
         public void UpdateMenu(GameTime gameTime)
         {
@@ -260,7 +286,7 @@ namespace Wombat
 
             foreach (Player player in players)
             {
-                spriteBatch.Draw(rectangleTexture, player.bigHitBox, Color.Green);
+               // spriteBatch.Draw(rectangleTexture, player.bigHitBox, Color.Green);
 
 
                 player.Draw(spriteBatch);
@@ -282,7 +308,7 @@ namespace Wombat
         }
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.White);
             spriteBatch.Begin();
             if (currentGameScreen == GameScreen.GameRunning)
             {
