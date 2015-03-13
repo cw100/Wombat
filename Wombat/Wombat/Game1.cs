@@ -22,6 +22,7 @@ namespace Wombat
 
             
         }
+        Texture2D bulletTexture;
         int currentMenuItem= 1;
         GameScreen currentGameScreen = GameScreen.MainMenu;
         List<Platform> platforms;
@@ -88,10 +89,10 @@ namespace Wombat
             players = new List<Player>();
             platforms = new List<Platform>();
             platformHitBoxes = new List<Rectangle>();
-            AddPlatform(new Vector2(100, 800));
-            AddPlatform(new Vector2(150, 700));
-            AddPlatform(new Vector2(500, 900));
-            AddPlatform(new Vector2(360, 700));
+            AddPlatform(new Vector2(150, 300));
+            AddPlatform(new Vector2(200, 550));
+            AddPlatform(new Vector2(350, 800));
+            AddPlatform(new Vector2(850, 470));
 
             InitializePlayers(4);
         }
@@ -129,6 +130,8 @@ namespace Wombat
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            bulletTexture = Content.Load<Texture2D>("Play");
             foreach (Player player in players)
             {
                 player.LoadContent(Content, "wombatPlaceholder");
@@ -163,18 +166,23 @@ namespace Wombat
                 platform.Update(gameTime);
             
             foreach (Player player in players)
-                player.Update(gameTime, platformHitBoxes, collisionManager);
+                player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture);
 
         }
+        float elapsedTime;
+        float menuTime = 100; 
         public void MenuSelect(GameTime gameTime)
         {
             if(1 <= currentMenuItem && currentMenuItem <= menuButtons.Count)
             {
-               
-                if(true)
+
+                elapsedTime += gameTime.ElapsedGameTime.Milliseconds;
+                 if (elapsedTime > menuTime)
                 {
-           currentMenuItem -= (int)(GamePad.GetState(PlayerIndex.One).ThumbSticks.Left.Y);
+                    currentMenuItem -= (int)(GamePad.GetState(PlayerIndex.One).ThumbSticks.Left.Y);
+                    elapsedTime = 0;
                 }
+                 
             }
 
             

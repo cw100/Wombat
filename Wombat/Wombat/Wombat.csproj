@@ -38,6 +38,7 @@
     <Compile Include="Animation.cs" />
     <Compile Include="Button.cs" />
     <Compile Include="Collision.cs" />
+    <Compile Include="Projectile.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Platform.cs" />
     <Compile Include="Player.cs" />
