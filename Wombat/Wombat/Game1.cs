@@ -20,8 +20,8 @@ namespace Wombat
             MainMenu,
             GameRunning,
 
-            
         }
+        static public List<Projectile> AllBullets;
         Texture2D bulletTexture;
         int currentMenuItem= 1;
         GameScreen currentGameScreen = GameScreen.MainMenu;
@@ -70,7 +70,7 @@ namespace Wombat
             for (int i = 0; i < numOfPlayers; i++)
             {
                 Player player;
-                PlayerIndex playerIndex = new PlayerIndex();
+                PlayerIndex playerIndex;
                 playerIndex = (PlayerIndex)i;
                 player = new Player();
                 player.Initialize(playerSpeed, playerStartHealth, new Vector2(0, 0), globalGravity,
@@ -93,7 +93,7 @@ namespace Wombat
             AddPlatform(new Vector2(200, 550));
             AddPlatform(new Vector2(350, 800));
             AddPlatform(new Vector2(850, 470));
-
+            AllBullets = new List<Projectile>();
             InitializePlayers(4);
         }
        public void InitializeMainMenu()
@@ -131,7 +131,7 @@ namespace Wombat
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            bulletTexture = Content.Load<Texture2D>("Play");
+            bulletTexture = Content.Load<Texture2D>("particle");
             foreach (Player player in players)
             {
                 player.LoadContent(Content, "wombatPlaceholder");
@@ -168,6 +168,8 @@ namespace Wombat
             foreach (Player player in players)
                 player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture);
 
+            UpdateBullets(gameTime);
+
         }
         float elapsedTime;
         float menuTime = 100; 
@@ -195,6 +197,13 @@ namespace Wombat
                 currentMenuItem = menuButtons.Count;
             }
         }
+        public void UpdateBullets(GameTime gameTime)
+        {
+            foreach (Projectile projectile in AllBullets)
+            {
+                projectile.Update(gameTime);
+            }
+        }
         public void UpdateMenu(GameTime gameTime)
         {
             MenuSelect(gameTime);
@@ -216,6 +225,8 @@ namespace Wombat
             }
 
         }
+        
+        
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -254,6 +265,12 @@ namespace Wombat
 
                 player.Draw(spriteBatch);
             }
+            
+            foreach (Projectile projectile in AllBullets)
+            {
+                projectile.Draw(spriteBatch);
+            }
+        
         }
         public void DrawMenu(GameTime gameTime)
         {
