@@ -19,8 +19,9 @@ namespace Wombat
         public bool active = true;
         public Rectangle hitBox;
         public PlayerIndex playerNum;
+        public bool explosive;
 
-        public void Initialize(Texture2D projetiletexture, int damage, float speed, Vector2 position, Vector2 angle, PlayerIndex playernum)
+        public void Initialize(Texture2D projetiletexture, int damage, float speed, Vector2 position, Vector2 angle, PlayerIndex playernum, bool Explosive)
         {
             playerNum = playernum;
             Position = position;
@@ -30,7 +31,7 @@ namespace Wombat
                 direction = new Vector2(0, 1);
             }
             direction.Normalize();
-
+            explosive = Explosive;
             projectileDamage = damage;
             projectileSpeed = speed;
             projectileTexture = projetiletexture;
@@ -63,10 +64,12 @@ namespace Wombat
         public void Draw(SpriteBatch spritebatch)
         {
             if (active)
-                spritebatch.Draw(projectileTexture, Position, new Rectangle(0, 0, 10, 10), Color.Red, 0f, new Vector2(5, 5), 4f, SpriteEffects.None, 1f);
+            {
+                spritebatch.Draw(projectileTexture, Position, new Rectangle(0, 0, projectileTexture.Width, projectileTexture.Height), Color.Red,
+                    (float)(Math.Atan2(direction.X, direction.Y) - Math.PI / 2), new Vector2(projectileTexture.Width / 2, projectileTexture.Height / 2), 1f, SpriteEffects.None, 1f);
+           
 
-
-
+            }
 
         }
     }

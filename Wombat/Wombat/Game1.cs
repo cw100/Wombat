@@ -21,6 +21,7 @@ namespace Wombat
             GameRunning,
 
         }
+        Animation explosion;
         static public List<Projectile> AllBullets;
         Texture2D bulletTexture;
         int currentMenuItem= 1;
@@ -110,15 +111,23 @@ namespace Wombat
             button.Initialize(new Vector2(736 + 454 / 2, 748 + 145 / 2), "ExitButton", "exit", 3);
            menuButtons.Add(button);
        }
+       Texture2D explosionTex;
+       List<Animation> explosions;
+        public void AddExplosion(Vector2 position)
+       {
+           Animation explosion = new Animation();
+           explosion.Initialize(9, 1, position, 0f, Color.White);
 
-
+           explosions.Add(explosion);
+       }
         protected override void Initialize()
         {
             float scaleX = (float)GraphicsDevice.Viewport.Width / (float)VirtualScreenWidth;
             float scaleY = (float)GraphicsDevice.Viewport.Height / (float)VirtualScreenHeight;
-
+            explosions = new List<Animation>();
             screenScale = new Vector3(scaleX, scaleY, 1.0f);
             mouseState = new MouseState();
+            
             InitializeGameScreen();
 
             InitializeMainMenu();
@@ -126,12 +135,18 @@ namespace Wombat
 
         }
 
-        
+        Texture2D particle;
+        Texture2D gun;
+        Texture2D rocketTexture;
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            bulletTexture = Content.Load<Texture2D>("particle");
+            particle = Content.Load<Texture2D>("particle");
+            bulletTexture = Content.Load<Texture2D>("bullet");
+            rocketTexture = Content.Load<Texture2D>("Rocket");
+            gun = Content.Load<Texture2D>("gun");
+            explosionTex = Content.Load<Texture2D>("explosion");
             foreach (Player player in players)
             {
                 player.LoadContent(Content, "Wombat");
@@ -166,10 +181,21 @@ namespace Wombat
                 platform.Update(gameTime);
             
             foreach (Player player in players)
-                player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture);
+                player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture, particle, gun, rocketTexture);
 
             UpdateBullets(gameTime);
 
+        }
+        public void UpdateExplosions()
+        {
+            for (int i; i < explosions.Count;i++ )
+            {
+                explosions[i].Update();
+                if(!explosions[i].active )
+                {
+                    explosions.RemoveAt(i);
+                }
+            }
         }
         float elapsedTime;
         float menuTime = 100; 
@@ -290,13 +316,16 @@ namespace Wombat
 
 
                 player.Draw(spriteBatch);
-            }
+               }
             
             foreach (Projectile projectile in AllBullets)
             {
                 projectile.Draw(spriteBatch);
             }
-        
+            foreach (Player player in players)
+            {
+         player.DrawGun(spriteBatch);
+            }
         }
         public void DrawMenu(GameTime gameTime)
         {
