@@ -95,6 +95,7 @@ namespace Wombat
         int numOfPlayers = 4;
        public void InitializeGameScreen()
         {
+            InitializePowerups();
             explosionHitBoxes = new List<Rectangle>();
             explosions = new List<Animation>();
             globalGravity = new Vector2(0, 100f);
@@ -278,6 +279,7 @@ namespace Wombat
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
+            powerupTexure = Content.Load<Texture2D>("powerup");
             playerOneWin = Content.Load<Texture2D>("playerOneWin");
 
             playerTwoWin = Content.Load<Texture2D>("playerTwoWins");
@@ -352,6 +354,54 @@ namespace Wombat
         protected override void UnloadContent()
         {
         }
+        Random random;
+        List<Powerup> powerups;
+        public void InitializePowerups()
+        {
+
+            powerupSpawns = new List<Vector2>();
+            powerups = new List<Powerup>();
+            powerupSpawns.Add(new Vector2(1920/2, 500));
+            powerupSpawns.Add(new Vector2((1920/3), 400));
+                powerupSpawns.Add(new Vector2((1920/3)*2, 400));
+            powerupSpawns.Add(new Vector2((1920/3), 800));
+                powerupSpawns.Add(new Vector2((1920/3)*2, 800));
+        }
+        List<Vector2> powerupSpawns;
+        Texture2D powerupTexure;
+        public void AddPowerup()
+        {
+            random = new Random();
+            int rnd = random.Next(5);
+            Powerup powerup = new Powerup();
+            powerup.Initialize(powerupTexure,TimeSpan.FromSeconds(10),powerupSpawns[rnd],100);
+            powerups.Add(powerup);
+
+        }
+        public void UpdatePowerups(GameTime gameTime)
+        {
+            for(int i = 0; i<players.Count; i++)
+            {
+                for (int j = 0; j < powerups.Count; j++)
+                {
+                    if (players[i].bigHitBox.Intersects(powerups[j].hitBox))
+                    {
+                        players[i].currentPowerup = powerups[j];
+                        players[i].previousTime = gameTime.TotalGameTime;
+                        powerups[j].active = false;
+                        powerups.RemoveAt(j);
+                    }
+                }
+            }
+                }
+        
+        public void DrawPowerups(SpriteBatch spriteBatch)
+        {
+            foreach(Powerup pwerup in powerups)
+            {
+                pwerup.Draw(spriteBatch);
+            }
+        }
         public void ApplyExplosive()
         {
             foreach(Player ply in players)
@@ -370,10 +420,17 @@ namespace Wombat
             }
             }
         }
+        TimeSpan lastTime;
+        
         public void UpdateGame(GameTime gameTime)
         {
+            if (gameTime.TotalGameTime - lastTime > TimeSpan.FromSeconds(10))
+            {
+                lastTime = gameTime.TotalGameTime;
+                AddPowerup();
+            }
+            UpdatePowerups(gameTime);
             foreach (Platform platform in platforms)
-
                 platform.Update(gameTime);
             ApplyExplosive();
             foreach (Player player in players)
@@ -416,7 +473,7 @@ namespace Wombat
                 elapsedTime += gameTime.ElapsedGameTime.Milliseconds;
                  if (elapsedTime > menuTime)
                 {
-                    currentMenuItem += (int)(GamePad.GetState(num).ThumbSticks.Left.Y);
+                    currentMenuItem -= (int)(GamePad.GetState(num).ThumbSticks.Left.Y);
                     elapsedTime = 0;
                 }
                  
@@ -556,6 +613,7 @@ namespace Wombat
             {
          player.DrawGun(spriteBatch);
             }
+            DrawPowerups(spriteBatch);
             DrawExplosions(spriteBatch);
         }
         public void DrawMenu(GameTime gameTime)
