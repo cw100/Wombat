@@ -386,9 +386,11 @@ namespace Wombat
                 {
                     if (players[i].bigHitBox.Intersects(powerups[j].hitBox))
                     {
+                        players[i].powerupActive = true;
+                        players[i].damageMultiplyer = 1000;
                         players[i].currentPowerup = powerups[j];
                         players[i].previousTime = gameTime.TotalGameTime;
-                        powerups[j].active = false;
+                        //powerups[j].active = false;
                         powerups.RemoveAt(j);
                     }
                 }
