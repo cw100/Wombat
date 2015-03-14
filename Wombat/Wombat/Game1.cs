@@ -21,7 +21,9 @@ namespace Wombat
             GameRunning,
 
         }
-        Animation explosion;
+
+
+        static public List<Rectangle> explosionHitBoxes;
         static public List<Projectile> AllBullets;
         Texture2D bulletTexture;
         int currentMenuItem= 1;
@@ -102,28 +104,44 @@ namespace Wombat
            menuButtons = new List<Button>();
            
            Button button= new Button();
-           button.Initialize(new Vector2(736 + 454 / 2, 169 + 145/2), "playButton", "play", 1);
+           button.Initialize(new Vector2(134 + 420 / 2, 540 + 140 / 2), "PlayButton", "play", 1);
            menuButtons.Add(button);
            button = new Button();
-           button.Initialize(new Vector2(736 + 454 / 2, 467 + 145 / 2), "OptionsButton", "options", 2);
+           button.Initialize(new Vector2(730 + 420 / 2, 540 + 140 / 2), "OptionsButton", "options", 2);
            menuButtons.Add(button);
             button = new Button();
-            button.Initialize(new Vector2(736 + 454 / 2, 748 + 145 / 2), "ExitButton", "exit", 3);
+            button.Initialize(new Vector2(1336 + 420 / 2, 540 + 140 / 2), "ExitButton", "exit", 3);
            menuButtons.Add(button);
        }
-       Texture2D explosionTex;
-       List<Animation> explosions;
-        public void AddExplosion(Vector2 position)
+       static Texture2D explosionTex;
+       static List<Animation> explosions;
+       static public void AddExplosion(Vector2 position)
        {
            Animation explosion = new Animation();
-           explosion.Initialize(9, 1, position, 0f, Color.White);
 
+
+           explosion.spriteSheet = explosionTex;
+           explosion.Initialize(true, 10, 0.25f, position, 0f, Color.White);
+           explosion.scale = 2f;
+           explosionHitBoxes.Add(new Rectangle((int)position.X, (int)position.Y, explosion.frameWidth * 2, explosion.frameHeight * 2));
+           explosions.Add(explosion);
+       }
+       static public void AddExplosion(Vector2 position,float scale)
+       {
+           Animation explosion = new Animation();
+
+           
+           explosion.spriteSheet = explosionTex;
+           explosion.Initialize(true,10, 0.25f, position, 0f, Color.White);
+           explosion.scale = scale;
+           explosionHitBoxes.Add(new Rectangle((int)position.X, (int)position.Y, explosion.frameWidth*2, explosion.frameHeight*2));
            explosions.Add(explosion);
        }
         protected override void Initialize()
         {
             float scaleX = (float)GraphicsDevice.Viewport.Width / (float)VirtualScreenWidth;
             float scaleY = (float)GraphicsDevice.Viewport.Height / (float)VirtualScreenHeight;
+            explosionHitBoxes = new List<Rectangle>();
             explosions = new List<Animation>();
             screenScale = new Vector3(scaleX, scaleY, 1.0f);
             mouseState = new MouseState();
@@ -135,9 +153,10 @@ namespace Wombat
 
         }
 
-        Texture2D particle;
+        static public Texture2D particle;
         Texture2D gun;
         Texture2D rocketTexture;
+        Texture2D MenuBackground;
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -147,6 +166,8 @@ namespace Wombat
             rocketTexture = Content.Load<Texture2D>("Rocket");
             gun = Content.Load<Texture2D>("gun");
             explosionTex = Content.Load<Texture2D>("explosion");
+
+            MenuBackground = Content.Load<Texture2D>("MainScreen");
             foreach (Player player in players)
             {
                 player.LoadContent(Content, "Wombat");
@@ -173,26 +194,46 @@ namespace Wombat
         protected override void UnloadContent()
         {
         }
-
+        public void ApplyExplosive()
+        {
+            foreach(Player ply in players)
+            { 
+                foreach(Rectangle explo in explosionHitBoxes)
+            {
+                if(explo.Intersects(ply.bigHitBox))
+                {
+                    Vector2 direction = new Vector2(explo.Center.X, explo.Center.Y) - new Vector2( ply.bigHitBox.Center.X,ply.bigHitBox.Center.Y);
+                    float distance = Vector2.Distance(new Vector2(explo.Center.X, explo.Center.Y), ply.playerPosition);
+                    
+                    direction.X = -direction.X;
+                    direction.Y = -direction.Y;
+                    ply.velocity += (10/(1+distance) *  direction);
+                }
+            }
+            }
+        }
         public void UpdateGame(GameTime gameTime)
         {
             foreach (Platform platform in platforms)
 
                 platform.Update(gameTime);
-            
+            ApplyExplosive();
             foreach (Player player in players)
-                player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture, particle, gun, rocketTexture);
-
+                player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture,  gun, rocketTexture);
+            
             UpdateBullets(gameTime);
+            UpdateExplosions(gameTime);
 
         }
-        public void UpdateExplosions()
+        public void UpdateExplosions(GameTime gameTime)
         {
-            for (int i; i < explosions.Count;i++ )
+            for (int i= 0; i < explosions.Count;i++ )
             {
-                explosions[i].Update();
+                explosions[i].Update(gameTime);
                 if(!explosions[i].active )
                 {
+
+                    explosionHitBoxes.RemoveAt(i);
                     explosions.RemoveAt(i);
                 }
             }
@@ -207,7 +248,7 @@ namespace Wombat
                 elapsedTime += gameTime.ElapsedGameTime.Milliseconds;
                  if (elapsedTime > menuTime)
                 {
-                    currentMenuItem -= (int)(GamePad.GetState(PlayerIndex.One).ThumbSticks.Left.Y);
+                    currentMenuItem += (int)(GamePad.GetState(PlayerIndex.One).ThumbSticks.Left.X);
                     elapsedTime = 0;
                 }
                  
@@ -231,6 +272,10 @@ namespace Wombat
                 {
                     if(projectile.hitBox.Intersects(platform))
                     {
+                        if (projectile.explosive)
+                        {
+                            Game1.AddExplosion(projectile.Position);
+                        }
                         projectile.active = false;
                         
                     }
@@ -294,6 +339,13 @@ namespace Wombat
             }
             base.Update(gameTime);
         }
+        public void DrawExplosions(SpriteBatch spriteBatch)
+        {
+            foreach(Animation expl in explosions)
+            {
+                expl.Draw(spriteBatch);
+            }
+        }
         public void DrawGame(GameTime gameTime)
         {
             Texture2D rectangleTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
@@ -326,10 +378,14 @@ namespace Wombat
             {
          player.DrawGun(spriteBatch);
             }
+            DrawExplosions(spriteBatch);
         }
         public void DrawMenu(GameTime gameTime)
         {
+            
+                spriteBatch.Draw(MenuBackground, new Vector2(0, 0), Color.White);
             foreach (Button button in menuButtons)
+            
             {
                 button.Draw(spriteBatch);
             }
