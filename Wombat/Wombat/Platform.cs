@@ -23,10 +23,10 @@ namespace Wombat
         public void Initialize(Vector2 pos)
         {
             platformAnimation = new Animation();
-
-            platformAnimation.Initialize(1, 1, pos, 0f, Color.White);
             position = pos;
-        }
+
+            platformAnimation.Initialize(1, 1, position, 0f, Color.White);
+            }
         public void Update(GameTime gameTime)
         {
             platformAnimation.Update(gameTime);

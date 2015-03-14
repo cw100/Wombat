@@ -6,6 +6,8 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.GamerServices;
 #endregion
 
@@ -18,11 +20,14 @@ namespace Wombat
         enum GameScreen
         {
             MainMenu,
+            SelectScreen,
             GameRunning,
+            GameOver
 
         }
-
-
+        Texture2D playerIcon;
+        Texture2D backgroundGame;
+        Song mainMenuMusic;
         static public List<Rectangle> explosionHitBoxes;
         static public List<Projectile> AllBullets;
         Texture2D bulletTexture;
@@ -41,7 +46,7 @@ namespace Wombat
         float playerSpeed;
         float playerStartHealth;
         List<Player> players;
-       
+        static public int deadCount;
         int VirtualScreenWidth = 1920;
         int VirtualScreenHeight = 1080;
         Vector3 screenScale;
@@ -67,9 +72,13 @@ namespace Wombat
             platform.Initialize(position);
             platforms.Add(platform);
         }
-        
+        List<Vector2> SpawnList = new List<Vector2>();
         public void InitializePlayers(int numOfPlayers)
         {
+            SpawnList.Add(new Vector2(2 + 150, 350));
+            SpawnList.Add(new Vector2(2 + 150, 850));
+            SpawnList.Add(new Vector2(1610 + 150, 850));
+            SpawnList.Add(new Vector2(1612 + 150, 400));
             for (int i = 0; i < numOfPlayers; i++)
             {
                 Player player;
@@ -77,32 +86,48 @@ namespace Wombat
                 playerIndex = (PlayerIndex)i;
                 player = new Player();
                 player.Initialize(playerSpeed, playerStartHealth, new Vector2(0, 0), globalGravity,
-                   new Vector2(0 + i * 300, 0), playerIndex, playerJumpHeight);
+                  SpawnList[i], playerIndex, playerJumpHeight);
                 players.Add(player);
 
             }
 
         }
+        int numOfPlayers = 4;
        public void InitializeGameScreen()
         {
+            explosionHitBoxes = new List<Rectangle>();
+            explosions = new List<Animation>();
             globalGravity = new Vector2(0, 100f);
-            playerSpeed = 1000;
-            playerJumpHeight = new Vector2(0, 400f);
+            playerSpeed = 750;
+            playerJumpHeight = new Vector2(0, 300f);
             playerStartHealth = 100;
             players = new List<Player>();
             platforms = new List<Platform>();
             platformHitBoxes = new List<Rectangle>();
-            AddPlatform(new Vector2(150, 300));
-            AddPlatform(new Vector2(200, 550));
-            AddPlatform(new Vector2(350, 800));
-            AddPlatform(new Vector2(850, 470));
+            AddPlatform(new Vector2(2+150, 469));
+            AddPlatform(new Vector2(2 + 150, 930));
+            AddPlatform(new Vector2(777 + 150, 368));
+            AddPlatform(new Vector2(489 + 150, 563));
+
+            AddPlatform(new Vector2(189 + 150, 724));
+
+            AddPlatform(new Vector2(1078 + 150, 563));
+
+            AddPlatform(new Vector2(1378 + 150, 724));
+
+            AddPlatform(new Vector2(789 + 150, 889));
+            AddPlatform(new Vector2(1610 + 150, 931));
+
+            AddPlatform(new Vector2(1612+150, 469));
+
             AllBullets = new List<Projectile>();
-            InitializePlayers(4);
+            InitializePlayers(numOfPlayers);
         }
        public void InitializeMainMenu()
        {
            menuButtons = new List<Button>();
-           
+
+           //MediaPlayer.Play(mainMenuMusic);
            Button button= new Button();
            button.Initialize(new Vector2(134 + 420 / 2, 540 + 140 / 2), "PlayButton", "play", 1);
            menuButtons.Add(button);
@@ -137,36 +162,135 @@ namespace Wombat
            explosionHitBoxes.Add(new Rectangle((int)position.X, (int)position.Y, explosion.frameWidth*2, explosion.frameHeight*2));
            explosions.Add(explosion);
        }
+       List<Texture2D> playerIcons;
+        public void InitializeSelectScreen()
+       {
+           playerIcon = Content.Load<Texture2D>("wombat");
+           playerColors = new List<Color>();
+           playerIcons = new List<Texture2D>();
+           playerColors.Add(Color.White);
+           playerColors.Add(Color.Black);
+           playerColors.Add(Color.Blue);
+           playerColors.Add(Color.Red);
+           playerColors.Add(Color.SandyBrown);
+           playerColors.Add(Color.Green);
+           playerColors.Add(Color.Yellow);
+            
+            playerIcons.Add(playerIcon);
+            playerIcons.Add(playerIcon);
+            playerIcons.Add(playerIcon);
+            playerIcons.Add(playerIcon);
+
+
+       }
+        public void UpdateSelectScreen(GameTime gameTime)
+        {
+            
+          
+                for (int i = 0; i < players.Count; i++)
+                {
+                    if (!players[i].ready)
+                    {
+                    ColorSelect(gameTime, i);
+                }
+                    if (GamePad.GetState((PlayerIndex)i).Buttons.A == ButtonState.Pressed&&!players[i].ready)
+                    {
+                        players[i].ready = true;
+                        readyPlayers += 1;
+                    }
+                    if (GamePad.GetState((PlayerIndex)i).Buttons.B == ButtonState.Pressed && players[i].ready)
+                    {
+                        players[i].ready = false;
+                        readyPlayers -= 1;
+                    }
+                }
+            if(readyPlayers == 4)
+            {
+                currentGameScreen = GameScreen.GameRunning;
+            }
+
+                
+            
+        }
+        public void DrawIcons(SpriteBatch spriteBatch)
+        {
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (!players[i].ready)
+                {
+                    spriteBatch.Draw(playerIcons[i], new Vector2((1920-150)/2, 300+100 * i), players[i].color);
+                }
+                else
+                {
+                    spriteBatch.Draw(playerIcons[i], new Vector2(100 + (1920 - 150) / 2, 300 + 100 * i), players[i].color);
+            }
+            }
+        }
+        int colorNum;
+        List<Color> playerColors;
+        public void ColorSelect(GameTime gameTime, int num)
+        {
+
+            if (1 <= players[num].colorNum && players[num].colorNum <= playerColors.Count)
+            {
+
+                elapsedTime += gameTime.ElapsedGameTime.Milliseconds;
+                if (elapsedTime > menuTime)
+                {
+                    players[num].colorNum += (int)(GamePad.GetState(players[num].playerNumber).ThumbSticks.Left.X);
+                    elapsedTime = 0;
+                }
+
+            }
+
+
+            if (1 > players[num].colorNum)
+            {
+                players[num].colorNum = 1;
+            }
+            if (players[num].colorNum > playerColors.Count)
+            {
+                players[num].colorNum = playerColors.Count;
+            }
+            players[num].color = playerColors[players[num].colorNum-1];
+         
+        }
         protected override void Initialize()
         {
             float scaleX = (float)GraphicsDevice.Viewport.Width / (float)VirtualScreenWidth;
             float scaleY = (float)GraphicsDevice.Viewport.Height / (float)VirtualScreenHeight;
-            explosionHitBoxes = new List<Rectangle>();
-            explosions = new List<Animation>();
+            
             screenScale = new Vector3(scaleX, scaleY, 1.0f);
             mouseState = new MouseState();
-            
+            readyPlayers = 0;
             InitializeGameScreen();
-
+            InitializeSelectScreen();
             InitializeMainMenu();
             base.Initialize();
 
         }
-
+        int readyPlayers;
         static public Texture2D particle;
         Texture2D gun;
         Texture2D rocketTexture;
         Texture2D MenuBackground;
+        Texture2D playerOneWin, playerTwoWin, playerThreeWin, playerFourWin, winningTex;
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
+            playerOneWin = Content.Load<Texture2D>("playerOneWin");
 
+            playerTwoWin = Content.Load<Texture2D>("playerTwoWins");
+
+            playerThreeWin = Content.Load<Texture2D>("playerThreeWins");
+
+            playerFourWin = Content.Load<Texture2D>("playerFourWins"); 
             particle = Content.Load<Texture2D>("particle");
             bulletTexture = Content.Load<Texture2D>("bullet");
             rocketTexture = Content.Load<Texture2D>("Rocket");
             gun = Content.Load<Texture2D>("gun");
             explosionTex = Content.Load<Texture2D>("explosion");
-
+            backgroundGame = Content.Load<Texture2D>("BackgroundGame");
             MenuBackground = Content.Load<Texture2D>("MainScreen");
             foreach (Player player in players)
             {
@@ -175,7 +299,7 @@ namespace Wombat
 
             foreach (Platform platform in platforms)
             {
-                platform.LoadContent(Content, "platform");
+                platform.LoadContent(Content, "Plank");
                 platformHitBoxes.Add(platform.hitBox);
             }
             foreach(Button button in menuButtons)
@@ -189,8 +313,42 @@ namespace Wombat
 
 
         }
+        public void ResetGame()
+        {
+            deadCount = 0;
+            Initialize();
+        }
+        int winningPlayer;
+        public void GameOverCheck()
+        {
+            if (deadCount == (numOfPlayers - 1))
+            {
+                foreach(Player player in players)
+                {
+                    if(player.active)
+                    {
+                        winningPlayer = (int)player.playerNumber;
+                        switch (winningPlayer)
+                        {
+                            case (int)PlayerIndex.One:
+                                winningTex = playerOneWin;
+                                break;
+                            case (int)PlayerIndex.Two:
+                                winningTex = playerTwoWin;
+                                break;
+                            case (int)PlayerIndex.Three:
+                                winningTex = playerThreeWin;
+                                break;
+                            case (int)PlayerIndex.Four:
+                                winningTex = playerFourWin;
+                                break;
+                        }
+                        currentGameScreen = GameScreen.GameOver;
+                    }
+                }
 
-       
+             }
+        }
         protected override void UnloadContent()
         {
         }
@@ -220,10 +378,20 @@ namespace Wombat
             ApplyExplosive();
             foreach (Player player in players)
                 player.Update(gameTime, platformHitBoxes, collisionManager, bulletTexture,  gun, rocketTexture);
-            
+            GameOverCheck();
             UpdateBullets(gameTime);
             UpdateExplosions(gameTime);
 
+        }
+        public void UpdateGameOverScreen()
+        {
+           if (GamePad.GetState(PlayerIndex.One).Buttons.B == ButtonState.Pressed )
+           {
+               currentGameScreen = GameScreen.MainMenu;
+               ResetGame();
+           }
+            
+            
         }
         public void UpdateExplosions(GameTime gameTime)
         {
@@ -240,7 +408,7 @@ namespace Wombat
         }
         float elapsedTime;
         float menuTime = 100; 
-        public void MenuSelect(GameTime gameTime)
+        public void MenuSelect(GameTime gameTime, PlayerIndex num)
         {
             if(1 <= currentMenuItem && currentMenuItem <= menuButtons.Count)
             {
@@ -248,7 +416,7 @@ namespace Wombat
                 elapsedTime += gameTime.ElapsedGameTime.Milliseconds;
                  if (elapsedTime > menuTime)
                 {
-                    currentMenuItem += (int)(GamePad.GetState(PlayerIndex.One).ThumbSticks.Left.X);
+                    currentMenuItem += (int)(GamePad.GetState(num).ThumbSticks.Left.X);
                     elapsedTime = 0;
                 }
                  
@@ -303,7 +471,7 @@ namespace Wombat
         }
         public void UpdateMenu(GameTime gameTime)
         {
-            MenuSelect(gameTime);
+            MenuSelect(gameTime, PlayerIndex.One);
             foreach (Button button in menuButtons)
             {
                 button.Update(gameTime,mouseState, currentMenuItem);
@@ -312,7 +480,7 @@ namespace Wombat
 
                     if(button.buttonName =="play")
                     {
-                        currentGameScreen = GameScreen.GameRunning;
+                        currentGameScreen = GameScreen.SelectScreen;
                     }
                     if (button.buttonName == "exit")
                     {
@@ -329,6 +497,10 @@ namespace Wombat
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             mouseState = Mouse.GetState();
+            if (currentGameScreen == GameScreen.SelectScreen)
+            {
+                UpdateSelectScreen(gameTime);
+            }
             if (currentGameScreen == GameScreen.GameRunning)
             {
                 UpdateGame(gameTime);
@@ -336,6 +508,10 @@ namespace Wombat
             if (currentGameScreen == GameScreen.MainMenu)
             {
                 UpdateMenu(gameTime);
+            }
+            if (currentGameScreen == GameScreen.GameOver)
+            {
+                UpdateGameOverScreen();
             }
             base.Update(gameTime);
         }
@@ -348,6 +524,8 @@ namespace Wombat
         }
         public void DrawGame(GameTime gameTime)
         {
+            spriteBatch.Draw(backgroundGame, new Vector2(0, 0), Color.White);
+           
             Texture2D rectangleTexture = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
 
             Color[] color = new Color[1 * 1];
@@ -382,13 +560,19 @@ namespace Wombat
         }
         public void DrawMenu(GameTime gameTime)
         {
-            
                 spriteBatch.Draw(MenuBackground, new Vector2(0, 0), Color.White);
             foreach (Button button in menuButtons)
             
             {
                 button.Draw(spriteBatch);
             }
+
+        }
+        public void DrawGameOver()
+        {
+            spriteBatch.Draw(backgroundGame, new Vector2(0, 0), Color.White);
+           
+            spriteBatch.Draw(winningTex, new Vector2((1920 - winningTex.Width) / 2, (1080 - winningTex.Height) / 2), Color.Green);
 
         }
         protected override void Draw(GameTime gameTime)
@@ -399,10 +583,18 @@ namespace Wombat
             {
                 DrawGame(gameTime);
             }
-
+            if (currentGameScreen == GameScreen.SelectScreen)
+            {
+                spriteBatch.Draw(backgroundGame, new Vector2(0, 0), Color.White);
+                DrawIcons(spriteBatch);
+            }
             if (currentGameScreen == GameScreen.MainMenu)
             {
                 DrawMenu(gameTime);
+            }
+            if (currentGameScreen == GameScreen.GameOver)
+            {
+                DrawGameOver();
             }
             spriteBatch.End();
 

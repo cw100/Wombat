@@ -98,13 +98,14 @@ namespace Wombat
             }
 
         }
+        public Color color = Color.Red;
         public void Draw(SpriteBatch spriteBatch)
         {
             if (active)
             {
                 DrawEmiters(spriteBatch);
                 
-                spriteBatch.Draw(projectileTexture, Position, new Rectangle(0, 0, projectileTexture.Width, projectileTexture.Height), Color.Red,
+                spriteBatch.Draw(projectileTexture, Position, new Rectangle(0, 0, projectileTexture.Width, projectileTexture.Height), color,
                     (float)(Math.Atan2(direction.X, direction.Y) - Math.PI / 2), new Vector2(projectileTexture.Width / 2, projectileTexture.Height / 2), 1f, SpriteEffects.None, 1f);
            
 
