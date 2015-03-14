@@ -129,13 +129,13 @@ namespace Wombat
 
            //MediaPlayer.Play(mainMenuMusic);
            Button button= new Button();
-           button.Initialize(new Vector2(134 + 420 / 2, 540 + 140 / 2), "PlayButton", "play", 1);
+           button.Initialize(new Vector2((1920)/ 2, 500 + 140 / 2), "Playbuttonnew", "play", 1);
            menuButtons.Add(button);
-           button = new Button();
-           button.Initialize(new Vector2(730 + 420 / 2, 540 + 140 / 2), "OptionsButton", "options", 2);
-           menuButtons.Add(button);
+           //button = new Button();
+           //button.Initialize(new Vector2(730 + 420 / 2, 540 + 140 / 2), "OptionsButton", "options", 2);
+           //menuButtons.Add(button);
             button = new Button();
-            button.Initialize(new Vector2(1336 + 420 / 2, 540 + 140 / 2), "ExitButton", "exit", 3);
+            button.Initialize(new Vector2((1920)/ 2, 700 + 140 / 2), "ExitButtonnew", "exit", 2);
            menuButtons.Add(button);
        }
        static Texture2D explosionTex;
@@ -291,7 +291,7 @@ namespace Wombat
             gun = Content.Load<Texture2D>("gun");
             explosionTex = Content.Load<Texture2D>("explosion");
             backgroundGame = Content.Load<Texture2D>("BackgroundGame");
-            MenuBackground = Content.Load<Texture2D>("MainScreen");
+            MenuBackground = Content.Load<Texture2D>("BackgroundMenu");
             foreach (Player player in players)
             {
                 player.LoadContent(Content, "Wombat");
@@ -416,7 +416,7 @@ namespace Wombat
                 elapsedTime += gameTime.ElapsedGameTime.Milliseconds;
                  if (elapsedTime > menuTime)
                 {
-                    currentMenuItem += (int)(GamePad.GetState(num).ThumbSticks.Left.X);
+                    currentMenuItem += (int)(GamePad.GetState(num).ThumbSticks.Left.Y);
                     elapsedTime = 0;
                 }
                  
