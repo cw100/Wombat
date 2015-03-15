@@ -386,8 +386,6 @@ namespace Wombat
                 {
                     if (players[i].bigHitBox.Intersects(powerups[j].hitBox))
                     {
-                        players[i].powerupActive = true;
-                        players[i].damageMultiplyer = 1000;
                         players[i].currentPowerup = powerups[j];
                         players[i].previousTime = gameTime.TotalGameTime;
                         //powerups[j].active = false;
@@ -417,7 +415,7 @@ namespace Wombat
                     
                     direction.X = -direction.X;
                     direction.Y = -direction.Y;
-                    ply.velocity += (10/(1+distance) *  direction);
+                    ply.velocity += (15/(1+distance) *  direction);
                 }
             }
             }
